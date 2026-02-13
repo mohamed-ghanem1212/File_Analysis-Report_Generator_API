@@ -3,11 +3,12 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { User } from '../interface/users.interface';
 import { prisma } from 'src/db/prisma.client';
 import bcrypt from 'node_modules/bcryptjs';
-import jwt from 'jsonwebtoken';
+import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class UsersService {
   private readonly users: User[] = [];
@@ -22,23 +23,16 @@ export class UsersService {
       data: { ...user, password: hashedPassword },
       include: { projects: true },
     });
-    const token = jwt.sign(
-      {
-        userId: newUser.id,
-        email: newUser.email,
-        role: newUser.role,
-      },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '1h' },
-    );
+
     const { password, ...userWithoutPassword } = newUser;
-    return { ...userWithoutPassword, token };
+
+    return { ...userWithoutPassword };
   }
   async getUserByEmail(email: string) {
     const findUser = await prisma.user.findUnique({ where: { email } });
     return findUser;
   }
-  async verifyUser(email: string, password: string) {
+  async verifyUser(email: string) {
     const user: User = await this.getUserByEmail(email);
     if (!user) {
       throw new HttpException(
@@ -46,19 +40,20 @@ export class UsersService {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new HttpException(
-        'Invalid email or password',
-        HttpStatus.UNAUTHORIZED,
-      );
+
+    return user;
+  }
+  async findUserById(id: string): Promise<User> {
+    if (!id) {
+      throw new BadRequestException('essential data needed');
     }
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '1h' },
-    );
-    const { password: _, ...userWithoutPassword } = user;
-    return { ...userWithoutPassword, token };
+    const findUser: User = await prisma.user.findFirst({
+      where: { id },
+      include: { projects: true },
+    });
+    if (!findUser) {
+      throw new NotFoundException('User not found');
+    }
+    return findUser;
   }
 }
