@@ -1,17 +1,13 @@
-import { ProjectCreateNestedManyWithoutUserInput } from 'src/db/prisma/src/db/generated/prisma/models';
+import { Project, Role } from '@prisma/client';
 
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  USER = 'USER',
-}
 export interface User {
   id?: string;
   email: string;
   username: string;
   password: string;
-  role?: UserRole;
+  role?: Role;
   isActive?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  projects?: ProjectCreateNestedManyWithoutUserInput;
+  projects?: Project[];
 }

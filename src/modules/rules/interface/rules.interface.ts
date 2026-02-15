@@ -1,8 +1,4 @@
-import { Prisma } from 'src/db/prisma/src/db/generated/prisma/client';
-import {
-  Category,
-  Severity,
-} from 'src/db/prisma/src/db/generated/prisma/enums';
+import { Category, Prisma, Severity } from '@prisma/client';
 
 export interface Rule {
   id?: string;

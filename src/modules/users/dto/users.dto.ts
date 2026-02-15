@@ -1,25 +1,37 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 import {
   IsBoolean,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsOptional,
   IsString,
+  IsUUID,
   MinLength,
 } from 'class-validator';
-import { Role } from 'src/db/prisma/src/db/generated/prisma/enums';
 
 export class CreateUserDto {
+  @ApiProperty()
   @IsEmail()
   email: string;
+  @ApiProperty()
   @IsString()
   username: string;
+  @ApiProperty()
   @IsString()
   @MinLength(2)
   password: string;
+  @ApiProperty({
+    enum: Role,
+    enumName: 'Role',
+    required: false,
+  })
   @IsEnum(Role, {
     message: `Role must be either ${Role.ADMIN} or ${Role.USER}`,
   })
-  role: Role;
+  @IsOptional()
+  role?: Role;
 }
 export class VerifyUserDto {
   @IsEmail()

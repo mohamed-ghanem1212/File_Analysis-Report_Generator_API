@@ -1,8 +1,4 @@
-import { Prisma } from 'src/db/prisma/src/db/generated/prisma/client';
-import {
-  AnalysisStatus,
-  TriggerType,
-} from 'src/db/prisma/src/db/generated/prisma/enums';
+import { AnalysisStatus, Prisma, TriggerType } from '@prisma/client';
 
 export interface Analysis {
   id?: string;

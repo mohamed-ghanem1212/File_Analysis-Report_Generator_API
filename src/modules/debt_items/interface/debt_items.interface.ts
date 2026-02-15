@@ -1,4 +1,4 @@
-import { Severity, Status } from 'src/db/prisma/src/db/generated/prisma/enums';
+import { Severity, Status } from '@prisma/client';
 
 export interface Debt_Item {
   id: string;

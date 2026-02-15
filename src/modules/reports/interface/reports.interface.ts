@@ -1,8 +1,4 @@
-import { Prisma } from 'src/db/prisma/src/db/generated/prisma/client';
-import {
-  Format,
-  ReportType,
-} from 'src/db/prisma/src/db/generated/prisma/enums';
+import { Format, Prisma, ReportType } from '@prisma/client';
 
 export interface Report {
   id?: string;

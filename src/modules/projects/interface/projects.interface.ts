@@ -1,5 +1,4 @@
-import { Prisma } from 'src/db/prisma/src/db/generated/prisma/client';
-import { Visibility } from 'src/db/prisma/src/db/generated/prisma/enums';
+import { Prisma, Visibility } from '@prisma/client';
 
 export interface Project {
   id?: string;
