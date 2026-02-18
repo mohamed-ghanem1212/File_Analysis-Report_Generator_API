@@ -8,8 +8,9 @@ import {
 
 import bcrypt from 'bcryptjs';
 import { PrismaService } from 'src/db/service/db.service';
-import { CreateUserDto } from '../dto/users.dto';
+import { CreateUserDto, UpdateUserDto } from '../dto/users.dto';
 import { User } from '../interface/users.interface';
+import { AuthUser } from 'src/common/decorators/user.decorator';
 
 @Injectable()
 export class UsersService {
@@ -59,17 +60,58 @@ export class UsersService {
 
     return user;
   }
-  async findUserById(id: string): Promise<User> {
+  async findUserById(id: string): Promise<any> {
     if (!id) {
       throw new BadRequestException('essential data needed');
     }
     const findUser = await this.prisma.user.findUnique({
-      where: { id },
+      where: { id: id },
       include: { projects: true },
     });
     if (!findUser) {
       throw new NotFoundException('User not found');
     }
-    return findUser;
+    const { password, ...user } = findUser;
+    return user;
+  }
+  async getAllUsers(): Promise<any> {
+    const AllUsers = await this.prisma.user.findMany();
+    if (AllUsers.length === 0) {
+      throw new BadRequestException("Users' list is empty");
+    }
+    const users = AllUsers.map((user: User) => {
+      const { password, ...users } = user;
+      return users;
+    });
+    return users;
+  }
+  async updateUser(user: UpdateUserDto, id: string): Promise<any> {
+    console.log(`user____ ${user}`);
+
+    if (!id) {
+      throw new BadRequestException("Need user's ID");
+    }
+    const findUser = await this.prisma.user.findUnique({
+      where: { id },
+    });
+    if (!findUser) {
+      throw new NotFoundException('User not found');
+    }
+    const userUpdator = await this.prisma.user.update({
+      data: {
+        username: user.username,
+        email: user.email,
+        isActive: user.isActive,
+      },
+      where: { id },
+    });
+    const { password, ...saveUser } = userUpdator;
+    return saveUser;
+  }
+  async fetchUserByToken(user: AuthUser) {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 }

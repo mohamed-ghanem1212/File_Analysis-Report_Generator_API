@@ -6,7 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/modules/users/service/users.service';
 import bcrypt from 'bcryptjs';
-import { CreateUserDto } from 'src/modules/users/dto/users.dto';
+import { CreateUserDto, VerifyUserDto } from 'src/modules/users/dto/users.dto';
 import { User } from 'src/modules/users/interface/users.interface';
 
 @Injectable()
@@ -22,7 +22,7 @@ export class AuthService {
       throw new BadRequestException('Something went wrong try again later');
     }
     const payLoad = {
-      userId: newUser.id,
+      id: newUser.id,
       email: newUser.email,
       username: newUser.username,
     };
@@ -40,17 +40,18 @@ export class AuthService {
     if (!hashedPassword) {
       throw new UnauthorizedException('Invalid Credentials');
     }
-    const generateToken = await this.logIn(userValidator);
-    return { userValidator, generateToken };
+    const { password: _, ...userData } = userValidator;
+    return userData;
   }
   async logIn(user: User) {
     const jwtPayLoad = {
-      userId: user.id,
+      id: user.id,
       email: user.email,
       username: user.username,
       role: user.role,
     };
     const token = await this.jwtService.signAsync(jwtPayLoad);
-    return token;
+
+    return { user, token };
   }
 }

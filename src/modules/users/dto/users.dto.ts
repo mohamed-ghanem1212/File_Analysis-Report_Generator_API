@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import {
   IsBoolean,
@@ -34,21 +34,23 @@ export class CreateUserDto {
   role?: Role;
 }
 export class VerifyUserDto {
+  @ApiProperty()
   @IsEmail()
   email: string;
-  @IsString()
-  username: string;
+  @ApiProperty()
   @IsString()
   @MinLength(2)
   password: string;
 }
 export class UpdateUserDto {
+  @ApiProperty()
   @IsEmail()
   email: string;
-
+  @ApiProperty()
   @IsOptional()
   @IsString()
   username: string;
+  @ApiProperty()
   @IsOptional()
   @IsBoolean()
   isActive: boolean;
