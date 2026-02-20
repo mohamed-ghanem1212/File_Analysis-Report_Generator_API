@@ -108,10 +108,26 @@ export class UsersService {
     const { password, ...saveUser } = userUpdator;
     return saveUser;
   }
-  async fetchUserByToken(user: AuthUser) {
-    if (!user) {
+  async fetchUserByToken(id: string) {
+    if (!id) {
+      throw new BadRequestException('User ID missing from token');
+    }
+    const findUser = await this.prisma.user.findUnique({
+      where: { id },
+    });
+    if (!findUser) {
       throw new NotFoundException('User not found');
     }
+    const { password, ...user } = findUser;
     return user;
+  }
+  async removeUser(id: string) {
+    if (!id) {
+      throw new BadRequestException('User ID missing from token');
+    }
+    await this.findUserById(id);
+    const deleteUser = await this.prisma.user.delete({ where: { id } });
+    const { password, ...userRemover } = deleteUser;
+    return userRemover;
   }
 }

@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  UseFilters,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from '../service/users.service';
 import {
   ApiBearerAuth,
@@ -11,15 +20,18 @@ import { UpdateUserDto } from '../dto/users.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/common/decorators/user.decorator';
 import type { AuthUser } from 'src/common/decorators/user.decorator';
+import { HttpExceptionFilter } from 'src/common/filters/http.exception';
 
 @Controller('users')
+@UseFilters(new HttpExceptionFilter())
 export class UsersController {
   constructor(private userService: UsersService) {}
 
-  @Get('/getUser:id')
-  @ApiParam({ name: 'id', type: 'id' })
-  async getUserById(@Param() params: { id: string }) {
-    const findUser = await this.userService.findUserById(params.id);
+  @Get('/getUser/:id')
+  @ApiParam({ name: 'id', type: 'string' })
+  @ApiOperation({ summary: 'get user by his ID' })
+  async getUserById(@Param('id') id: string) {
+    const findUser = await this.userService.findUserById(id);
     return findUser;
   }
   @Get('/getAllUsers')
@@ -76,14 +88,30 @@ export class UsersController {
       newUser,
     };
   }
-
   @Get('/getUserByToken')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user' })
   async getUserByToken(@CurrentUser() user: AuthUser) {
     console.log(user);
-
-    return await this.userService.fetchUserByToken(user);
+    const User = await this.userService.fetchUserByToken(user.id);
+    return {
+      message: 'User found',
+      success: true,
+      User,
+    };
+  }
+  @Delete('/removeUser/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete user' })
+  @ApiParam({ name: 'id', type: 'string' })
+  async deleteUserById(@Param('id') id: string) {
+    const removeUser = await this.userService.removeUser(id);
+    return {
+      message: 'User has been removed',
+      success: true,
+      removeUser,
+    };
   }
 }

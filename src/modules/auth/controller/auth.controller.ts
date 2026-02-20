@@ -12,15 +12,17 @@ import type { User } from 'src/modules/users/interface/users.interface';
 export class AuthController {
   constructor(private authService: AuthService) {}
   @Post('/createUser')
+  @ApiOperation({ summary: 'create new user' })
   async createUser(@Body() createUserDto: CreateUserDto) {
     console.log(createUserDto);
 
-    const newUser = await this.authService.joinUser(createUserDto);
+    const { newUser, token } = await this.authService.joinUser(createUserDto);
     console.log(newUser);
     return {
       message: 'User has been created',
       success: true,
       newUser,
+      token,
     };
   }
   @UseGuards(LocalAuthGuard)
