@@ -11,9 +11,6 @@ import {
 } from 'class-validator';
 
 export class CreateProjectDTO {
-  @ApiHideProperty()
-  @IsUUID()
-  userId: string;
   @ApiProperty()
   @IsString()
   name: string;
@@ -24,6 +21,7 @@ export class CreateProjectDTO {
   @ApiProperty({
     enumName: 'Visibility',
     enum: Visibility,
+    required: false,
     description: 'PUBLIC or Private',
   })
   @IsEnum(Visibility, {
@@ -41,7 +39,6 @@ export class UpdateProjectDTO {
   name: string;
   @ApiProperty()
   @IsOptional()
-  @IsUrl()
   @IsEnum(Visibility, {
     message: 'must be PUBLIC or PRIVATE',
   })

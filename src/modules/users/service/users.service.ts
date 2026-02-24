@@ -40,6 +40,7 @@ export class UsersService {
 
       const findUser = await this.prisma.user.findFirst({
         where: { email },
+        include: { projects: true },
       });
 
       console.log('3. Query completed. User found:', !!findUser);

@@ -17,7 +17,7 @@ model User {
   isActive  Boolean     @default(true)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  Analyses  Analysis[]
+  analyses  Analysis[]
   auditLogs Audit_log[]
   comments  Comment[]
   debtItems Debt_Item[]
@@ -30,7 +30,10 @@ model Project {
   id            String        @id @default(uuid())
   userId        String
   name          String
-  repositoryUrl String?
+  description   String?
+  repositoryUrl String
+  branch        String        @default("main")
+  language      Language
   visibility    Visibility    @default(PRIVATE)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -48,11 +51,13 @@ model Analysis {
   userId          String
   status          AnalysisStatus @default(PENDING)
   trigger         TriggerType    @default(MANUAL)
-  summary         Json
-  totalFiles      Int
-  totalLines      Int
-  issuesFound     Int
-  complexityScore Float
+  branch          String
+  commitHash      String?
+  summary         Json           @default("{}")
+  totalFiles      Int            @default(0)
+  totalLines      Int            @default(0)
+  issuesFound     Int            @default(0)
+  complexityScore Float          @default(0)
   startedAt       DateTime       @default(now())
   completedAt     DateTime?
   project         Project        @relation(fields: [projectId], references: [id])
@@ -68,6 +73,7 @@ model File {
   analysisId      String
   filePath        String
   fileName        String
+  fileExtension   String
   fileHash        String
   linesOfCode     Int
   lineBlank       Int
@@ -89,7 +95,7 @@ model Issue {
   lineNumber      Int
   columnNumber    Int
   codeSnippet     String
-  suggestion      String
+  suggestion      String?
   isResolved      Boolean     @default(false)
   resolvedAt      DateTime?
   resolvedById    String?
@@ -108,7 +114,7 @@ model Metric {
   value      Float
   unit       String
   type       MetricType
-  metaData   Json
+  metaData   Json       @default("{}")
   analysis   Analysis   @relation(fields: [analysisId], references: [id])
   project    Project    @relation(fields: [projectId], references: [id])
 }
@@ -119,10 +125,11 @@ model Report {
   userId      String
   reportType  ReportType @default(SUMMARY)
   format      Format     @default(JSON)
-  content     Json
+  content     Json       @default("{}")
   filePath    String?
   downloadUrl String?
   expiresAt   DateTime?
+  createdAt   DateTime   @default(now())
   analysis    Analysis   @relation(fields: [analysisId], references: [id])
   user        User       @relation(fields: [userId], references: [id])
 }
@@ -134,9 +141,9 @@ model Rule {
   description  String
   severity     Severity      @default(LOW)
   category     Category      @default(CODE_SMELL)
+  language     Language
   isActive     Boolean       @default(true)
-  config       Json
-  language     String
+  config       Json          @default("{}")
   projectRules ProjectRule[]
 }
 
@@ -149,6 +156,8 @@ model ProjectRule {
   configOverride   Json?
   project          Project   @relation(fields: [projectId], references: [id])
   rule             Rule      @relation(fields: [ruleId], references: [id])
+
+  @@unique([projectId, ruleId])
 }
 
 model Debt_Item {
@@ -158,39 +167,47 @@ model Debt_Item {
   title           String
   description     String
   priority        Severity  @default(MEDIUM)
-  status          Status
+  status          Status    @default(IDENTIFIED)
   estimatedEffort Int
-  businessImpact  Float
+  businessImpact  Float     @default(0)
   assignedToId    String?
   dueDate         DateTime?
-  assingedTo      User?     @relation(fields: [assignedToId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  assignedTo      User?     @relation(fields: [assignedToId], references: [id])
   issue           Issue     @relation(fields: [issueId], references: [id])
   project         Project   @relation(fields: [projectId], references: [id])
 }
 
 model Comment {
-  id              String  @id @default(uuid())
+  id              String   @id @default(uuid())
   userId          String
   commentableType String
   commentableId   String
   content         String
-  parentId        String? @default(uuid())
-  user            User    @relation(fields: [userId], references: [id])
+  parentId        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id])
 }
 
 model Audit_log {
   id         String   @id @default(uuid())
   userId     String
-  entityTybe String
+  entityType String
   entityId   String
-  action     String
-  oldValue   Json
-  newValue   Json
+  action     Action
+  oldValue   Json     @default("{}")
+  newValue   Json     @default("{}")
   ipAddress  String?
   userAgent  String?
   createdAt  DateTime @default(now())
   user       User     @relation(fields: [userId], references: [id])
 }
+
+// ────────────────────────────────────────
+// ENUMS
+// ────────────────────────────────────────
 
 enum Role {
   USER
@@ -200,6 +217,17 @@ enum Role {
 enum Visibility {
   PUBLIC
   PRIVATE
+}
+
+enum Language {
+  JAVASCRIPT
+  TYPESCRIPT
+  PYTHON
+  PHP
+  JAVA
+  GO
+  RUBY
+  CSHARP
 }
 
 enum AnalysisStatus {
