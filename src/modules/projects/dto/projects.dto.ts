@@ -1,5 +1,5 @@
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import { Visibility } from '@prisma/client';
+import { Language, Visibility } from '@prisma/client';
 import {
   IsString,
   IsJSON,
@@ -15,7 +15,6 @@ export class CreateProjectDTO {
   @IsString()
   name: string;
   @ApiProperty()
-  @IsOptional()
   @IsUrl()
   repositoryUrl: string;
   @ApiProperty({
@@ -24,6 +23,12 @@ export class CreateProjectDTO {
     required: false,
     description: 'PUBLIC or Private',
   })
+  @ApiProperty()
+  @IsEnum(Language)
+  language: Language;
+  @ApiProperty({ example: 'main' })
+  @IsString()
+  branch: string;
   @IsEnum(Visibility, {
     message: 'must be PUBLIC or PRIVATE',
   })

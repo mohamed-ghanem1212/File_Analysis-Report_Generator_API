@@ -5,6 +5,9 @@ CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
 CREATE TYPE "Visibility" AS ENUM ('PUBLIC', 'PRIVATE');
 
 -- CreateEnum
+CREATE TYPE "Language" AS ENUM ('JAVASCRIPT', 'TYPESCRIPT', 'PYTHON', 'PHP', 'JAVA', 'GO', 'RUBY', 'CSHARP');
+
+-- CreateEnum
 CREATE TYPE "AnalysisStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED');
 
 -- CreateEnum
@@ -50,7 +53,10 @@ CREATE TABLE "Project" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "repositoryUrl" TEXT,
+    "description" TEXT,
+    "repositoryUrl" TEXT NOT NULL,
+    "branch" TEXT NOT NULL DEFAULT 'main',
+    "language" "Language" NOT NULL,
     "visibility" "Visibility" NOT NULL DEFAULT 'PRIVATE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -66,11 +72,13 @@ CREATE TABLE "Analysis" (
     "userId" TEXT NOT NULL,
     "status" "AnalysisStatus" NOT NULL DEFAULT 'PENDING',
     "trigger" "TriggerType" NOT NULL DEFAULT 'MANUAL',
-    "summary" JSONB NOT NULL,
-    "totalFiles" INTEGER NOT NULL,
-    "totalLines" INTEGER NOT NULL,
-    "issuesFound" INTEGER NOT NULL,
-    "complexityScore" DOUBLE PRECISION NOT NULL,
+    "branch" TEXT NOT NULL,
+    "commitHash" TEXT,
+    "summary" JSONB NOT NULL DEFAULT '{}',
+    "totalFiles" INTEGER NOT NULL DEFAULT 0,
+    "totalLines" INTEGER NOT NULL DEFAULT 0,
+    "issuesFound" INTEGER NOT NULL DEFAULT 0,
+    "complexityScore" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "completedAt" TIMESTAMP(3),
 
@@ -83,6 +91,7 @@ CREATE TABLE "File" (
     "analysisId" TEXT NOT NULL,
     "filePath" TEXT NOT NULL,
     "fileName" TEXT NOT NULL,
+    "fileExtension" TEXT NOT NULL,
     "fileHash" TEXT NOT NULL,
     "linesOfCode" INTEGER NOT NULL,
     "lineBlank" INTEGER NOT NULL,
@@ -105,7 +114,7 @@ CREATE TABLE "Issue" (
     "lineNumber" INTEGER NOT NULL,
     "columnNumber" INTEGER NOT NULL,
     "codeSnippet" TEXT NOT NULL,
-    "suggestion" TEXT NOT NULL,
+    "suggestion" TEXT,
     "isResolved" BOOLEAN NOT NULL DEFAULT false,
     "resolvedAt" TIMESTAMP(3),
     "resolvedById" TEXT,
@@ -123,7 +132,7 @@ CREATE TABLE "Metric" (
     "value" DOUBLE PRECISION NOT NULL,
     "unit" TEXT NOT NULL,
     "type" "MetricType" NOT NULL,
-    "metaData" JSONB NOT NULL,
+    "metaData" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Metric_pkey" PRIMARY KEY ("id")
 );
@@ -135,10 +144,11 @@ CREATE TABLE "Report" (
     "userId" TEXT NOT NULL,
     "reportType" "ReportType" NOT NULL DEFAULT 'SUMMARY',
     "format" "Format" NOT NULL DEFAULT 'JSON',
-    "content" JSONB NOT NULL,
+    "content" JSONB NOT NULL DEFAULT '{}',
     "filePath" TEXT,
     "downloadUrl" TEXT,
     "expiresAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Report_pkey" PRIMARY KEY ("id")
 );
@@ -151,9 +161,9 @@ CREATE TABLE "Rule" (
     "description" TEXT NOT NULL,
     "severity" "Severity" NOT NULL DEFAULT 'LOW',
     "category" "Category" NOT NULL DEFAULT 'CODE_SMELL',
+    "language" "Language" NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "config" JSONB NOT NULL,
-    "language" TEXT NOT NULL,
+    "config" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Rule_pkey" PRIMARY KEY ("id")
 );
@@ -178,11 +188,13 @@ CREATE TABLE "Debt_Item" (
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "priority" "Severity" NOT NULL DEFAULT 'MEDIUM',
-    "status" "Status" NOT NULL,
+    "status" "Status" NOT NULL DEFAULT 'IDENTIFIED',
     "estimatedEffort" INTEGER NOT NULL,
-    "businessImpact" DOUBLE PRECISION NOT NULL,
+    "businessImpact" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "assignedToId" TEXT,
     "dueDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Debt_Item_pkey" PRIMARY KEY ("id")
 );
@@ -195,6 +207,8 @@ CREATE TABLE "Comment" (
     "commentableId" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "parentId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Comment_pkey" PRIMARY KEY ("id")
 );
@@ -203,11 +217,11 @@ CREATE TABLE "Comment" (
 CREATE TABLE "Audit_log" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "entityTybe" TEXT NOT NULL,
+    "entityType" TEXT NOT NULL,
     "entityId" TEXT NOT NULL,
-    "action" TEXT NOT NULL,
-    "oldValue" JSONB NOT NULL,
-    "newValue" JSONB NOT NULL,
+    "action" "Action" NOT NULL,
+    "oldValue" JSONB NOT NULL DEFAULT '{}',
+    "newValue" JSONB NOT NULL DEFAULT '{}',
     "ipAddress" TEXT,
     "userAgent" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -220,6 +234,9 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Rule_ruleId_key" ON "Rule"("ruleId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProjectRule_projectId_ruleId_key" ON "ProjectRule"("projectId", "ruleId");
 
 -- AddForeignKey
 ALTER TABLE "Project" ADD CONSTRAINT "Project_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -234,10 +251,10 @@ ALTER TABLE "Analysis" ADD CONSTRAINT "Analysis_userId_fkey" FOREIGN KEY ("userI
 ALTER TABLE "File" ADD CONSTRAINT "File_analysisId_fkey" FOREIGN KEY ("analysisId") REFERENCES "Analysis"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Issue" ADD CONSTRAINT "Issue_fileId_fkey" FOREIGN KEY ("fileId") REFERENCES "File"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Issue" ADD CONSTRAINT "Issue_analysisId_fkey" FOREIGN KEY ("analysisId") REFERENCES "Analysis"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Issue" ADD CONSTRAINT "Issue_analysisId_fkey" FOREIGN KEY ("analysisId") REFERENCES "Analysis"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Issue" ADD CONSTRAINT "Issue_fileId_fkey" FOREIGN KEY ("fileId") REFERENCES "File"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Issue" ADD CONSTRAINT "Issue_resolvedById_fkey" FOREIGN KEY ("resolvedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -261,13 +278,13 @@ ALTER TABLE "ProjectRule" ADD CONSTRAINT "ProjectRule_projectId_fkey" FOREIGN KE
 ALTER TABLE "ProjectRule" ADD CONSTRAINT "ProjectRule_ruleId_fkey" FOREIGN KEY ("ruleId") REFERENCES "Rule"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Debt_Item" ADD CONSTRAINT "Debt_Item_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Debt_Item" ADD CONSTRAINT "Debt_Item_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Debt_Item" ADD CONSTRAINT "Debt_Item_issueId_fkey" FOREIGN KEY ("issueId") REFERENCES "Issue"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Debt_Item" ADD CONSTRAINT "Debt_Item_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Debt_Item" ADD CONSTRAINT "Debt_Item_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Comment" ADD CONSTRAINT "Comment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
