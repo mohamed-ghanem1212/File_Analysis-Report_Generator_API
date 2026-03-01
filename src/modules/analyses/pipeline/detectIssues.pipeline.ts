@@ -58,6 +58,7 @@ export const detectIssues = async (
             category: mapCategory(msg.ruleId),
             ruleId: msg.ruleId,
             codeSnippet: codeSnippet,
+            suggestion: '',
           });
         }
       }

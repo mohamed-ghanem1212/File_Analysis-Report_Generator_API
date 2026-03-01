@@ -46,6 +46,7 @@ export const parseFiles = async (clonePath: string): Promise<ParsedFile[]> => {
       filePath,
       fileName: path.basename(filePath),
       fileHash,
+      complexityScore: 0,
     });
   }
   return parsedFiles;

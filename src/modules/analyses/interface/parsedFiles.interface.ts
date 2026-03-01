@@ -6,4 +6,5 @@ export interface ParsedFile {
   linesOfCode: number;
   lineBlank: number;
   lineComment: number;
+  complexityScore: number;
 }

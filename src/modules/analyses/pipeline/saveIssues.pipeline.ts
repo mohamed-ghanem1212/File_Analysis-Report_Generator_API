@@ -31,6 +31,7 @@ export async function saveIssues(
       category: issue.category,
       severity: issue.severity,
       ruleId: issue.ruleId,
+      suggestion: issue.suggestion,
     })),
   });
 

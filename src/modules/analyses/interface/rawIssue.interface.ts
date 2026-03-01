@@ -19,4 +19,5 @@ export interface RawIssue {
   category: IssueCategory;
   ruleId: string;
   codeSnippet: string;
+  suggestion: string;
 }
