@@ -1,13 +1,15 @@
 import { response } from 'express';
 import OpenAI from 'openai';
-import { PrismaService } from 'src/db/service/db.service';
 
+import { PrismaService } from 'src/db/service/db.service';
+import 'dotenv/config';
+import Groq from 'groq-sdk';
 export const enrichWithAiSuggestion = async (
   analysisId: string,
   prisma: PrismaService,
 ): Promise<void> => {
-  const openAi = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+  const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY,
   });
 
   const issues = await prisma.issue.findMany({
@@ -20,9 +22,9 @@ export const enrichWithAiSuggestion = async (
   if (issues.length === 0) return;
   for (const issue of issues) {
     try {
-      const response = await openAi.chat.completions.create({
-        model: 'gpt-4',
-        max_tokens: 300,
+      const response = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+
         messages: [
           {
             role: 'system',
@@ -44,7 +46,7 @@ export const enrichWithAiSuggestion = async (
           },
         ],
       });
-      const suggestions = response.choices[0].message?.content ?? '';
+      const suggestions = response.choices[0]?.message?.content ?? '';
       await prisma.issue.update({
         where: { id: issue.id },
         data: {

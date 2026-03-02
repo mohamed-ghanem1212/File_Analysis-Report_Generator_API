@@ -1,12 +1,13 @@
 import { simpleGit, CleanOptions, SimpleGit } from 'simple-git';
 import * as fs from 'fs-extra';
+import os from 'os';
 import * as path from 'path';
 export async function fetchCode(
   repositoryUrl: string,
   branch: string,
   analysisId: string,
 ): Promise<{ clonePath: string; commitHash: string }> {
-  const clonePath = path.join('/tmp', `analysis${analysisId}`);
+  const clonePath = path.join(os.tmpdir(), `analysis-${analysisId}`);
   await fs.remove(clonePath);
   await fs.ensureDir(clonePath);
 

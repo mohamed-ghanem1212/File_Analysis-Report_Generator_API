@@ -39,15 +39,15 @@ export class AnalysesService {
         complexityScore: 0,
       },
     });
-    await this.analysisQueue.add('run-analysis', {
-      analysis: analysis.id,
+    await this.analysisQueue.add('analysis', {
+      analysisId: analysis.id,
       projectId,
       userId,
       repositoryUrl: project.repositoryUrl,
       branch: project.branch,
     });
     return {
-      analysis: analysis.id,
+      analysis: analysis,
       status: analysis.status,
       message: 'Analysis started successfully',
     };

@@ -1,13 +1,14 @@
 // src/analysis/pipeline/generate-summary.ts
 import OpenAI from 'openai';
 import { PrismaService } from 'src/db/service/db.service';
-
+import 'dotenv/config';
+import Groq from 'groq-sdk';
 export async function generateSummary(
   analysisId: string,
   prisma: PrismaService,
 ): Promise<void> {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+  const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY,
   });
 
   // fetch everything we need to build the summary
@@ -63,9 +64,9 @@ export async function generateSummary(
   };
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      max_tokens: 500,
+    const response = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+
       messages: [
         {
           role: 'system',
