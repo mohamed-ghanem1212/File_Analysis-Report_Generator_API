@@ -54,10 +54,4 @@ export class AnalysesController {
   ) {
     return await this.analysisService.getStatus(analysisId, projectId);
   }
-
-  @Get(':analysisId/report')
-  @ApiParam({ name: 'analysisId', type: 'string' })
-  async getReport(@Param('analysisId') analysisId: string) {
-    return this.analysisService.getReport(analysisId);
-  }
 }

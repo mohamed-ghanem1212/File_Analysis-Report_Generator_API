@@ -1,19 +1,33 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/db/service/db.service';
+import { generatePdfFromReport } from '../generators/pdf.generator';
 
 @Injectable()
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getReportById(id: string) {
-    if (!id) {
-      throw new BadRequestException('please provide an ID');
-    }
-    const report = await this.prisma.report.findUnique({
-      where: { id },
+  async getReport(analysisId: string) {
+    const report = await this.prisma.report.findFirst({
+      where: { analysisId },
     });
-    if (!report) {
-      throw new BadRequestException('report not found');
-    }
+
+    if (!report) throw new NotFoundException('Report not found');
+
+    return report;
+  }
+
+  async downloadPdf(analysisId: string): Promise<Buffer> {
+    const report = await this.prisma.report.findFirst({
+      where: { analysisId },
+    });
+
+    if (!report) throw new NotFoundException('Report not found');
+
+    const pdfBuffer = await generatePdfFromReport(report);
+    return pdfBuffer;
   }
 }

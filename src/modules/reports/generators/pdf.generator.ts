@@ -1,5 +1,5 @@
 // src/reports/utils/pdf-generator.ts
-import * as PDFDocument from 'pdfkit';
+import PDFDocument from 'pdfkit';
 import { Readable } from 'stream';
 
 export function generatePdfFromReport(report: any): Promise<Buffer> {

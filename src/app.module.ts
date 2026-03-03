@@ -8,6 +8,7 @@ import { ProjectModule } from './modules/projects/module/projects.module';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AnalysisModule } from './modules/analyses/module/analyses.module';
+import { ReportModule } from './modules/reports/module/report.module';
 @Module({
   imports: [
     UserModule,
@@ -15,6 +16,7 @@ import { AnalysisModule } from './modules/analyses/module/analyses.module';
     DbModule,
     ProjectModule,
     AnalysisModule,
+    ReportModule,
     ConfigModule.forRoot({ isGlobal: true }),
     BullModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({

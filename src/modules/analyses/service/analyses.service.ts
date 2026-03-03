@@ -80,13 +80,4 @@ export class AnalysesService {
     });
     return fetchAll;
   }
-  async getReport(analysisId: string) {
-    const report = await this.prisma.report.findFirst({
-      where: { analysisId },
-    });
-    if (!report) {
-      throw new NotFoundException('report not found');
-    }
-    return report;
-  }
 }
