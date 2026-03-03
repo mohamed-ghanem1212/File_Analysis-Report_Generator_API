@@ -7,9 +7,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = new DocumentBuilder()
     .setTitle('Codelens Api')
-    .setDescription('The Codelens API description')
+    .setDescription('AI-Powered Code Review & Analysis Platform')
     .setVersion('1.0')
-    .addTag('codelens')
+
     .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);

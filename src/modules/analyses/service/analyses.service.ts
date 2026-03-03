@@ -53,11 +53,13 @@ export class AnalysesService {
     };
   }
   async getStatus(projectId: string, analysisId: string) {
-    if (!analysisId) {
+    if (!analysisId || !projectId) {
       throw new BadRequestException('no id provided');
     }
+    console.log(projectId);
+
     const analysis = await this.prisma.analysis.findUnique({
-      where: { id: analysisId, projectId },
+      where: { id: analysisId, projectId: projectId },
       include: {
         files: true,
         issues: true,

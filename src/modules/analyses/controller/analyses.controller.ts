@@ -52,6 +52,6 @@ export class AnalysesController {
     @Param('projectId') projectId: string,
     @Param('analysisId') analysisId: string,
   ) {
-    return await this.analysisService.getStatus(analysisId, projectId);
+    return await this.analysisService.getStatus(projectId, analysisId);
   }
 }
